@@ -10,4 +10,8 @@
 
 为什么选它：[教程第 214 行](https://github.com/NVIDIA/cutlass/blob/v3.9.2/examples/cute/tutorial/sgemm_1.cu#L214) 调用三参数 `gemm`；[CuTe 的默认实现](https://github.com/NVIDIA/cutlass/blob/v3.9.2/include/cute/algorithm/gemm.hpp#L142-L160) 选用 `MMA_Atom<UniversalFMA<...>>`。本步只取最里面的 `UniversalFMA` 和实数运算，尚未放入 `MMA_Atom`。
 
-状态：两份头文件均完整取自上游同名路径，保留文件头的 BSD-3-Clause 声明；此快照尚缺依赖头文件和运行入口，不能独立编译，也未在 GPU 上执行。
+第 01 次提交的状态：两份头文件均完整取自上游同名路径，保留文件头的 BSD-3-Clause 声明；此快照尚缺依赖头文件和运行入口，不能独立编译，也未在 GPU 上执行。
+
+## 02 · 如何找到一个元素：Layout
+
+一个线程要读 A(m,k)，首先必须知道这个元素的地址。`layout.hpp` 把坐标映射到线性偏移。例如形状 (128,8)、步长 (1,128) 的块中，(3,2) 对应偏移 259。改变布局就能改变存储顺序，无需改变乘加公式。
