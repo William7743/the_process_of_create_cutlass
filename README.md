@@ -10,7 +10,7 @@
 
 为什么选它：[教程第 214 行](https://github.com/NVIDIA/cutlass/blob/v3.9.2/examples/cute/tutorial/sgemm_1.cu#L214) 调用三参数 `gemm`；[CuTe 的默认实现](https://github.com/NVIDIA/cutlass/blob/v3.9.2/include/cute/algorithm/gemm.hpp#L142-L160) 选用 `MMA_Atom<UniversalFMA<...>>`。本步只取最里面的 `UniversalFMA` 和实数运算，尚未放入 `MMA_Atom`。
 
-第 01 次提交的第 01 次提交的状态：两份头文件均完整取自上游同名路径，保留文件头的 BSD-3-Clause 声明；此快照尚缺依赖头文件和运行入口，不能独立编译，也未在 GPU 上执行。
+第 01 次提交的第 01 次提交的第 01 次提交的状态：两份头文件均完整取自上游同名路径，保留文件头的 BSD-3-Clause 声明；此快照尚缺依赖头文件和运行入口，不能独立编译，也未在 GPU 上执行。
 
 ## 02 · 如何找到一个元素：Layout
 
@@ -19,3 +19,7 @@
 ## 03 · 如何把一块数据分给线程：Tensor 与分区
 
 `tensor_impl.hpp` 把存储与布局组成 Tensor 视图。`local_tile` 选择线程块负责的区域，`local_partition` 选择一个线程负责的元素；这两步只生成视图。后续 `copy` 才实际搬运数据。这样同一份线程分工既可用于全局内存的源，也可用于共享内存的目的地。
+
+## 04 · 如何把乘加推广到整个分块：Atom 与算法
+
+一个标量乘加只更新一个值。`mma_atom.hpp` 把一次运算包装为算法可调用的 Atom；`algorithm/gemm.hpp` 根据张量的形状和秩组织多次运算。教程选用 UniversalFMA。此处并不要求调用 Tensor Core。
