@@ -10,7 +10,7 @@
 
 为什么选它：[教程第 214 行](https://github.com/NVIDIA/cutlass/blob/v3.9.2/examples/cute/tutorial/sgemm_1.cu#L214) 调用三参数 `gemm`；[CuTe 的默认实现](https://github.com/NVIDIA/cutlass/blob/v3.9.2/include/cute/algorithm/gemm.hpp#L142-L160) 选用 `MMA_Atom<UniversalFMA<...>>`。本步只取最里面的 `UniversalFMA` 和实数运算，尚未放入 `MMA_Atom`。
 
-第 01 次提交的第 01 次提交的第 01 次提交的状态：两份头文件均完整取自上游同名路径，保留文件头的 BSD-3-Clause 声明；此快照尚缺依赖头文件和运行入口，不能独立编译，也未在 GPU 上执行。
+第 01 次提交的第 01 次提交的第 01 次提交的第 01 次提交的状态：两份头文件均完整取自上游同名路径，保留文件头的 BSD-3-Clause 声明；此快照尚缺依赖头文件和运行入口，不能独立编译，也未在 GPU 上执行。
 
 ## 02 · 如何找到一个元素：Layout
 
@@ -23,3 +23,16 @@
 ## 04 · 如何把乘加推广到整个分块：Atom 与算法
 
 一个标量乘加只更新一个值。`mma_atom.hpp` 把一次运算包装为算法可调用的 Atom；`algorithm/gemm.hpp` 根据张量的形状和秩组织多次运算。教程选用 UniversalFMA。此处并不要求调用 Tensor Core。
+
+## 05 · 如何让以上组件运行：补齐依赖并加入原版示例
+
+`examples/cute/tutorial/sgemm_1.cu` 把以上组件装配成可启动的 CUDA kernel：分配输出块，按 K 块搬入 A、B，累加，最后写回 C。依赖集合包含被公共头文件间接引入的其他架构定义，不代表 3090 执行了这些架构的指令。
+
+从仓库根目录编译（CUDA 12.4、GCC 12.1，主机编译器与运行时库需匹配）：
+
+```bash
+nvcc -ccbin g++ -std=c++17 -arch=sm_86 -O3 --expt-relaxed-constexpr -Iinclude -Itools/util/include examples/cute/tutorial/sgemm_1.cu -o sgemm
+./sgemm 256 256 64 N T
+```
+
+前四个提交用于分层阅读；本提交包括实测依赖清单中的 141 个官方文件。教程的运行输出是冒烟检查，不是逐元素正确性证明。这条路径演示 CuTe 的标量 GEMM，不经过 `GemmUniversalAdapter`。
