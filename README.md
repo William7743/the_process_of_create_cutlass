@@ -42,3 +42,7 @@ nvcc -ccbin g++ -std=c++17 -arch=sm_86 -O3 --expt-relaxed-constexpr -Iinclude -I
 对比上一章：当乘加换成一组线程共同完成的 Tensor Core 指令，怎样保留分块、搬运和写回的组织方式？先读[官方测试采用的配置](test/unit/gemm/device/default_gemm_configuration.hpp#L157)：128×128×32 的线程块计算块、128 个线程、三阶段异步拷贝主循环。第 169–172 行用 TiledMMA 安排线程协作，第 193 行附近把搬运和计算组装为 CollectiveMainloop；尾处理另外组装。
 
 单条硬件矩阵操作在 [mma_sm80.hpp](include/cute/arch/mma_sm80.hpp#L158)，第 173 行给出对应 PTX。`mma_atom.hpp` 等头在标量例子的依赖中已经出现过；这次配置实际选择了 FP16 Tensor Core 操作。
+
+## 07 · 给主循环与尾处理配上 GPU 入口和 CPU 接口
+
+先读[官方用例第 57–71 行](test/unit/gemm/device/sm80_gemm_f16_f16_f32_tensor_op_f32.cu#L57)：取上一章的配置，把主循环和尾处理交给 `GemmUniversal`，再把 kernel 交给 `GemmUniversalAdapter`。主机现在有了启动入口。`gemm_universal.hpp` 汇集特化；此处通用 kernel 的实现位于 [sm70_gemm.hpp](include/cutlass/gemm/kernel/sm70_gemm.hpp#L55)，按 `KernelMultistage` 调度策略匹配，文件名不意味着在 3090 上执行 SM70 矩阵指令。
