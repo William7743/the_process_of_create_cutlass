@@ -36,3 +36,9 @@ nvcc -ccbin g++ -std=c++17 -arch=sm_86 -O3 --expt-relaxed-constexpr -Iinclude -I
 ```
 
 前四个提交用于分层阅读；本提交包括实测依赖清单中的 141 个官方文件。教程的运行输出是冒烟检查，不是逐元素正确性证明。这条路径演示 CuTe 的标量 GEMM，不经过 `GemmUniversalAdapter`。
+
+## 06 · 把线程分工和硬件指令接成一个主循环
+
+对比上一章：当乘加换成一组线程共同完成的 Tensor Core 指令，怎样保留分块、搬运和写回的组织方式？先读[官方测试采用的配置](test/unit/gemm/device/default_gemm_configuration.hpp#L157)：128×128×32 的线程块计算块、128 个线程、三阶段异步拷贝主循环。第 169–172 行用 TiledMMA 安排线程协作，第 193 行附近把搬运和计算组装为 CollectiveMainloop；尾处理另外组装。
+
+单条硬件矩阵操作在 [mma_sm80.hpp](include/cute/arch/mma_sm80.hpp#L158)，第 173 行给出对应 PTX。`mma_atom.hpp` 等头在标量例子的依赖中已经出现过；这次配置实际选择了 FP16 Tensor Core 操作。
