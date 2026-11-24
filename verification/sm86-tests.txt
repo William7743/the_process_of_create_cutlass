@@ -1,0 +1,26 @@
+Note: Google Test filter = -SM70*:SM89*:SM90*:SM100*
+[==========] Running 4 tests from 4 test suites.
+[----------] Global test environment set-up.
+[----------] 1 test from SM80_Device_Gemm_f16t_f16n_f32t_tensor_op_f32_3x
+[ RUN      ] SM80_Device_Gemm_f16t_f16n_f32t_tensor_op_f32_3x.128x128x32_64x64x32
+[       OK ] SM80_Device_Gemm_f16t_f16n_f32t_tensor_op_f32_3x.128x128x32_64x64x32 (873 ms)
+[----------] 1 test from SM80_Device_Gemm_f16t_f16n_f32t_tensor_op_f32_3x (873 ms total)
+
+[----------] 1 test from SM80_Device_Gemm_f16n_f16t_f32t_tensor_op_f32_3x
+[ RUN      ] SM80_Device_Gemm_f16n_f16t_f32t_tensor_op_f32_3x.128x128x32_64x64x32
+[       OK ] SM80_Device_Gemm_f16n_f16t_f32t_tensor_op_f32_3x.128x128x32_64x64x32 (800 ms)
+[----------] 1 test from SM80_Device_Gemm_f16n_f16t_f32t_tensor_op_f32_3x (800 ms total)
+
+[----------] 1 test from SM80_Device_Gemm_f16n_f16n_f32t_tensor_op_f32_3x
+[ RUN      ] SM80_Device_Gemm_f16n_f16n_f32t_tensor_op_f32_3x.128x128x32_64x64x32
+[       OK ] SM80_Device_Gemm_f16n_f16n_f32t_tensor_op_f32_3x.128x128x32_64x64x32 (790 ms)
+[----------] 1 test from SM80_Device_Gemm_f16n_f16n_f32t_tensor_op_f32_3x (790 ms total)
+
+[----------] 1 test from SM80_Device_Gemm_f16t_f16t_f32t_tensor_op_f32_3x
+[ RUN      ] SM80_Device_Gemm_f16t_f16t_f32t_tensor_op_f32_3x.128x128x32_64x64x32
+[       OK ] SM80_Device_Gemm_f16t_f16t_f32t_tensor_op_f32_3x.128x128x32_64x64x32 (845 ms)
+[----------] 1 test from SM80_Device_Gemm_f16t_f16t_f32t_tensor_op_f32_3x (845 ms total)
+
+[----------] Global test environment tear-down
+[==========] 4 tests from 4 test suites ran. (3310 ms total)
+[  PASSED  ] 4 tests.

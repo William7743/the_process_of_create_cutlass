@@ -46,3 +46,23 @@ nvcc -ccbin g++ -std=c++17 -arch=sm_86 -O3 --expt-relaxed-constexpr -Iinclude -I
 ## 07 · 给主循环与尾处理配上 GPU 入口和 CPU 接口
 
 先读[官方用例第 57–71 行](test/unit/gemm/device/sm80_gemm_f16_f16_f32_tensor_op_f32.cu#L57)：取上一章的配置，把主循环和尾处理交给 `GemmUniversal`，再把 kernel 交给 `GemmUniversalAdapter`。主机现在有了启动入口。`gemm_universal.hpp` 汇集特化；此处通用 kernel 的实现位于 [sm70_gemm.hpp](include/cutlass/gemm/kernel/sm70_gemm.hpp#L55)，按 `KernelMultistage` 调度策略匹配，文件名不意味着在 3090 上执行 SM70 矩阵指令。
+
+## 08 · 从空目录构建五层 GEMM 并验证四种布局
+
+从 `nvcc -M` 收集三个编译单元的仓库内依赖，把[清单中的 471 个官方文件](verification/sm86-files.txt)复制到空目录后独立编译。RTX 3090、CUDA 12.4、GCC 12.1、GoogleTest 1.14.0；[四个测试均通过](verification/sm86-tests.txt)。`cuobjdump --dump-sass` 在二进制中检出 `HMMA.16816.F32`。471 包含测试框架适配、参考计算以及公共头间接带入的实现；不代表五层设计必须手写 471 个文件。
+
+复现：在仓库根目录用 Bash 执行。`G` 指向解包的 GoogleTest 的 `googletest/`（含 src 和 include）；把本机工具链路径换成实际路径。
+
+```bash
+set -eu
+W=$(mktemp -d); G=/path/to/googletest-1.14.0/googletest
+CUDA=/usr/local/cuda-12.4; GCC=/usr/local/gcc-12.1.0
+export PATH="$CUDA/bin:$GCC/bin:$PATH" LD_LIBRARY_PATH="$GCC/lib64:$CUDA/lib64:${LD_LIBRARY_PATH:-}"
+TEST=test/unit/gemm/device/sm80_gemm_f16_f16_f32_tensor_op_f32.cu
+F=(-std=c++17 -arch=sm_86 -ccbin "$GCC/bin/g++" --expt-relaxed-constexpr --expt-extended-lambda -Iinclude -Itools/util/include -Itest/unit -Itest/unit/common -I"$G/include")
+nvcc "${F[@]}" -O2 -c "$TEST" -o "$W/gemm.o"
+g++ -std=c++17 -O2 -pthread -I"$G" -I"$G/include" -c "$G/src/gtest-all.cc" -o "$W/gtest.o"
+for t in test/unit/test_unit.cpp test/unit/common/filter_architecture.cpp; do nvcc "${F[@]}" -O2 -c "$t" -o "$W/$(basename "$t").o"; done
+nvcc -arch=sm_86 -ccbin "$GCC/bin/g++" -Xcompiler=-pthread "$W"/{gemm,gtest,test_unit.cpp,filter_architecture.cpp}.o -o "$W/sm86-tests"
+OMP_NUM_THREADS=4 "$W/sm86-tests"
+```
